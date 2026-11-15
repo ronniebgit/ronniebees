@@ -17,6 +17,9 @@
                 <div class="flex items-center gap-3">
                     <a href="{{ route('home') }}" class="rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10">View storefront</a>
                     <a href="{{ route('admin.orders.index') }}" class="rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white hover:bg-orange-600">Orders</a>
+                    <a href="{{ route('admin.categories.index') }}" class="rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10">Categories</a>
+                    <a href="{{ route('admin.products.index') }}" class="rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10">Products</a>
+                    <a href="{{ route('admin.toppings.index') }}" class="rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10">Toppings</a>
                     <a href="{{ route('admin.gift-cards.index') }}" class="rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10">Gift cards</a>
                     <form method="POST" action="{{ route('admin.logout') }}">
                         @csrf

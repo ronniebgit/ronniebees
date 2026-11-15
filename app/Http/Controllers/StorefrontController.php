@@ -18,12 +18,26 @@ class StorefrontController extends Controller
             return view('storefront.index', ['categories' => collect(), 'featuredProducts' => collect()]);
         }
 
-        $categories = Category::with('products')->get();
-        $featuredProducts = Product::with('category')
-            ->where('active', true)
-            ->where('featured', true)
-            ->limit(4)
+        $categories = Category::with('products')
+            ->visible()
+            ->ordered()
             ->get();
+        $featuredProducts = Product::with('category')
+            ->visible()
+            ->featured()
+            ->ordered()
+            ->get()
+            ->sortBy(function ($product) {
+                $priority = [
+                    'build-your-own-pizza' => 1,
+                    'margherita-pie' => 2,
+                    'pepperoni-feast' => 3,
+                    'bbq-chicken-pizza' => 4,
+                    'buffalo-ranch' => 5,
+                ];
+
+                return $priority[strtolower((string) ($product->slug ?? ''))] ?? 99;
+            })->values();
 
         return view('storefront.index', compact('categories', 'featuredProducts'));
     }
@@ -35,32 +49,17 @@ class StorefrontController extends Controller
         }
 
         $products = Product::with('category')
-            ->where('active', true)
-            ->whereNotIn('slug', ['garlic-knots', 'house-salad'])
-            ->get()
-            ->sortBy(function ($product) {
-                $priority = [
-                    'garden-glow' => 1,
-                    'build-your-own-pizza' => 2,
-                    'margherita-pie' => 3,
-                ];
-
-                $categorySlug = strtolower((string) ($product->category->slug ?? ''));
-                $productSlug = strtolower((string) ($product->slug ?? $product->name ?? ''));
-                $normalizedCategory = str_replace([' ', '_'], '-', $categorySlug);
-                $normalizedProduct = str_replace([' ', '_'], '-', $productSlug);
-
-                if (isset($priority[$normalizedCategory])) {
-                    return $priority[$normalizedCategory];
-                }
-
-                if (isset($priority[$normalizedProduct])) {
-                    return $priority[$normalizedProduct];
-                }
-
-                return 97;
-            })->values();
-        $categories = Category::withCount('products')->get();
+            ->visible()
+            ->whereHas('category', function ($query) {
+                $query->where('slug', 'drinks');
+            })
+            ->ordered()
+            ->get();
+        $categories = Category::withCount('products')
+            ->visible()
+            ->where('slug', 'drinks')
+            ->ordered()
+            ->get();
 
         return view('storefront.menu', compact('products', 'categories'));
     }
@@ -73,9 +72,10 @@ class StorefrontController extends Controller
 
         $product->load('category');
         $featuredProducts = Product::with('category')
-            ->where('active', true)
-            ->where('featured', true)
+            ->visible()
+            ->featured()
             ->whereKeyNot($product->id)
+            ->ordered()
             ->limit(5)
             ->get();
         $toppings = Topping::active()->get();

@@ -28,8 +28,13 @@
                     </div>
 
                     <div class="mt-8">
-                        <h2 class="text-xl font-black">Items</h2>
-                        <div class="mt-4 space-y-4">
+                        <div class="flex items-center justify-between gap-4">
+                            <h2 class="text-xl font-black">Items</h2>
+                            <span class="text-xs font-bold uppercase tracking-[0.14em] text-stone-500">{{ $order->items->count() }} items</span>
+                        </div>
+
+                        <form method="POST" action="{{ route('admin.orders.reorder', $order) }}" class="mt-4 space-y-4">
+                            @csrf
                             @foreach ($order->items as $item)
                                 <div class="rounded-2xl border border-stone-200 p-4">
                                     <div class="flex items-start justify-between gap-4">
@@ -39,12 +44,22 @@
                                             @if ($item->special_instructions)
                                                 <div class="mt-2 text-xs text-stone-500">Note: {{ $item->special_instructions }}</div>
                                             @endif
+                                            @if (!empty($item->cut_options))
+                                                <div class="mt-2 text-xs text-stone-500">Cut options: {{ implode(', ', $item->cut_options) }}</div>
+                                            @endif
                                         </div>
-                                        <div class="text-sm font-bold text-stone-900">${{ number_format($item->total_price, 2) }}</div>
+                                        <div class="text-right">
+                                            <div class="text-sm font-bold text-stone-900">${{ number_format($item->total_price, 2) }}</div>
+                                            <label class="mt-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-stone-500">
+                                                Order
+                                                <input type="number" name="order_items[{{ $item->id }}]" min="1" max="{{ $order->items->count() }}" value="{{ $loop->iteration }}" class="w-16 rounded-lg border border-stone-300 bg-white px-2 py-1 text-center text-sm font-bold text-stone-700" aria-label="Position for {{ $item->product_name }}" />
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             @endforeach
-                        </div>
+                            <button type="submit" class="mt-2 w-full rounded-full bg-stone-900 px-4 py-3 text-sm font-bold text-white hover:bg-stone-800">Save item order</button>
+                        </form>
                     </div>
                 </div>
 

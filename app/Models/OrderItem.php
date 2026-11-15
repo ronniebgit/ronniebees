@@ -18,10 +18,13 @@ class OrderItem extends Model
         'total_price',
         'special_instructions',
         'toppings',
+        'cut_options',
+        'sort_order',
     ];
 
     protected $casts = [
         'toppings' => 'array',
+        'cut_options' => 'array',
     ];
 
     public function order(): BelongsTo

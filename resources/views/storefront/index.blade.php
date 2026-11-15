@@ -23,7 +23,7 @@
 
                 <nav class="rb-nav">
                     <a href="{{ route('home') }}">Home</a>
-                    <a href="{{ route('menu') }}">Menu</a>
+                    <a href="{{ route('menu') }}">Drinks</a>
                     <a href="{{ route('gift-card') }}">Gift Card</a>
                     <a href="{{ route('track') }}">Track Order</a>
                 </nav>
@@ -44,7 +44,7 @@
                             <h3>What is New York Style Pizza?</h3>
                             <p>New York style pizza is a very thin style of pizza characterized by its large, foldable slices and crispy outer crust. It is traditionally topped with tomato sauce and mozzarella cheese.</p>
                             <div class="rb-banner-actions">
-                                <a href="{{ route('menu') }}" class="rb-btn rb-btn-primary">See Menu</a>
+                                <a href="{{ route('menu') }}" class="rb-btn rb-btn-primary">See Drinks</a>
                             </div>
                         </div>
 
@@ -73,7 +73,7 @@
                             <h3>Neighborhood favorite</h3>
                             <p>Classic slices, bold sauce, melted mozzarella, and a crisp finish that keeps customers coming back for more.</p>
                             <div class="rb-banner-actions">
-                                <a href="{{ route('menu') }}" class="rb-btn rb-btn-primary">See Menu</a>
+                                <a href="{{ route('menu') }}" class="rb-btn rb-btn-primary">See Drinks</a>
                             </div>
                         </div>
 
@@ -102,7 +102,7 @@
                             <h3>Made your way</h3>
                             <p>Choose your size, sauce, split options, and toppings to create a pizza that feels like your own neighborhood favorite.</p>
                             <div class="rb-banner-actions">
-                                <a href="{{ route('menu') }}" class="rb-btn rb-btn-primary">Build Yours</a>
+                                <a href="{{ route('menu') }}" class="rb-btn rb-btn-primary">Drinks</a>
                             </div>
                         </div>
 
@@ -187,14 +187,7 @@
                         <span>Shop by favorite</span>
                         <h2>Build your perfect pie</h2>
                     </div>
-                    <a href="{{ route('menu') }}">View all menu</a>
-                </div>
-
-                <div class="rb-menu-quick-actions" style="display:flex; flex-wrap:wrap; gap:0.75rem; margin:1.25rem 0 2rem;">
-                    <a href="{{ route('menu') }}#byo-pizza" class="rb-btn rb-btn-primary" style="display:inline-flex; align-items:center; justify-content:center; border-radius:999px; padding:0.75rem 1.25rem;">Build Your Own Pizza</a>
-                    @foreach ($featuredProducts->take(4) as $product)
-                        <a href="{{ route('product.show', $product) }}" class="rb-btn rb-btn-secondary" style="display:inline-flex; align-items:center; justify-content:center; border-radius:999px; padding:0.75rem 1.1rem; text-transform:none; letter-spacing:0.02em;">{{ $product->name }}</a>
-                    @endforeach
+                    <a href="{{ route('menu') }}">View all drinks</a>
                 </div>
 
                 <div class="rb-menu-grid">
@@ -211,9 +204,9 @@
                                 <div class="rb-card-footer">
                                     <div>
                                         <label>From</label>
-                                        <strong>${{ number_format($product->medium_price, 2) }}</strong>
+                                        <strong>${{ number_format((float) ($product->medium_price ?? $product->base_price ?? 0), 2) }}</strong>
                                     </div>
-                                    <a href="{{ route('product.show', $product) }}">Customize</a>
+                                    <a href="{{ route('product.show', $product) }}">Order</a>
                                 </div>
                             </div>
                         </article>
@@ -228,7 +221,7 @@
                     <article class="rb-category-card">
                         <span>{{ $category->products->count() }} items</span>
                         <h3>{{ $category->name }}</h3>
-                        <p>{{ $category->description }}</p>
+                        <p>{{ $category->description ?: 'Fresh favorites built for every craving.' }}</p>
                     </article>
                 @endforeach
             </div>

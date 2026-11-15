@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Topping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\Rule;
 
 class CartController extends Controller
 {
@@ -26,6 +27,7 @@ class CartController extends Controller
                 'image' => $item['image'] ?? null,
                 'special_instructions' => $item['special_instructions'] ?? '',
                 'toppings' => $item['toppings'] ?? [],
+                'cut_options' => $item['cut_options'] ?? [],
                 'line_total' => $item['quantity'] * $item['unit_price'],
                 'product' => $product,
             ];
@@ -38,43 +40,60 @@ class CartController extends Controller
 
     public function add(Request $request)
     {
-        $data = $request->validate([
+        $product = Product::find($request->input('product_id'));
+        $isDrinkProduct = strtolower((string) ($product?->category?->slug ?? '')) === 'drinks';
+
+        $rules = [
             'product_id' => ['required', 'exists:products,id'],
-            'size' => ['required', 'in:small,medium,large'],
-            'split_type' => ['required', 'in:whole,first-half,second-half,half-and-half'],
             'quantity' => ['required', 'integer', 'min:1'],
             'special_instructions' => ['nullable', 'string'],
             'toppings' => ['nullable', 'array'],
             'toppings.*' => ['required_with:toppings', 'integer', 'exists:toppings,id'],
             'topping_portions' => ['nullable', 'array'],
-        ]);
+            'topping_portions.*' => ['nullable', 'array'],
+            'topping_portions.*.*' => ['string', 'in:whole,first-half,second-half,half-and-half'],
+            'cut_options' => ['nullable', 'array'],
+            'cut_options.*' => ['required_with:cut_options', 'string', 'in:Well Done,XWell Done,No Cut'],
+        ];
+
+        if (! $isDrinkProduct) {
+            $rules['size'] = ['required', Rule::in($this->allowedSizesForProduct($product))];
+            $rules['split_type'] = ['required', 'in:whole,first-half,second-half,half-and-half'];
+        }
+
+        $data = $request->validate($rules);
 
         $product = Product::findOrFail($data['product_id']);
-        $selectedToppings = $this->normalizeToppings($request, $data['size']);
-        $basePrice = $product->priceForSize($data['size']);
-        $toppingCost = collect($selectedToppings)->sum(fn ($topping) => Topping::find($topping['id'])->priceForSize($data['size'], $topping['portion']));
+        $size = $isDrinkProduct ? 'single' : $data['size'];
+        $splitType = $isDrinkProduct ? 'whole' : $data['split_type'];
+        $selectedToppings = $isDrinkProduct ? [] : $this->normalizeToppings($request, $size);
+        $cutOptions = $this->normalizeCutOptions($request);
+        $basePrice = $product->priceForSize($size);
+        $toppingCost = collect($selectedToppings)->sum(fn ($topping) => Topping::find($topping['id'])->priceForSize($size, $topping['portion']));
         $unitPrice = (float) $basePrice + (float) $toppingCost;
 
-        $key = $product->id . '-' . $data['size'] . '-' . $data['split_type'];
+        $key = $product->id . '-' . $size . '-' . $splitType;
         $cart = Session::get('cart', []);
 
         $item = [
             'id' => $key,
             'product_id' => $product->id,
             'name' => $product->name,
-            'size' => $data['size'],
-            'split_type' => $data['split_type'],
+            'size' => $size,
+            'split_type' => $splitType,
             'quantity' => (int) $data['quantity'],
             'unit_price' => $unitPrice,
             'image' => $product->image,
             'special_instructions' => $data['special_instructions'] ?? '',
             'toppings' => $selectedToppings,
+            'cut_options' => $cutOptions,
         ];
 
         if (isset($cart[$key])) {
             $cart[$key]['quantity'] += (int) $data['quantity'];
             $cart[$key]['unit_price'] = $unitPrice;
             $cart[$key]['toppings'] = $selectedToppings;
+            $cart[$key]['cut_options'] = $cutOptions;
         } else {
             $cart[$key] = $item;
         }
@@ -92,15 +111,27 @@ class CartController extends Controller
             return back()->with('error', 'That item is no longer in your cart.');
         }
 
-        $data = $request->validate([
-            'size' => ['required', 'in:small,medium,large'],
-            'split_type' => ['required', 'in:whole,first-half,second-half,half-and-half'],
+        $product = Product::find($cart[$id]['product_id']);
+        $isDrinkProduct = strtolower((string) ($product?->category?->slug ?? '')) === 'drinks';
+
+        $rules = [
             'quantity' => ['required', 'integer', 'min:1'],
             'special_instructions' => ['nullable', 'string'],
             'toppings' => ['nullable', 'array'],
             'toppings.*' => ['required_with:toppings', 'integer', 'exists:toppings,id'],
             'topping_portions' => ['nullable', 'array'],
-        ]);
+            'topping_portions.*' => ['nullable', 'array'],
+            'topping_portions.*.*' => ['string', 'in:whole,first-half,second-half,half-and-half'],
+            'cut_options' => ['nullable', 'array'],
+            'cut_options.*' => ['required_with:cut_options', 'string', 'in:Well Done,XWell Done,No Cut'],
+        ];
+
+        if (! $isDrinkProduct) {
+            $rules['size'] = ['required', Rule::in($this->allowedSizesForProduct($product))];
+            $rules['split_type'] = ['required', 'in:whole,first-half,second-half,half-and-half'];
+        }
+
+        $data = $request->validate($rules);
 
         $product = Product::find($cart[$id]['product_id']);
 
@@ -111,17 +142,21 @@ class CartController extends Controller
             return back()->with('error', 'The selected product could not be updated.');
         }
 
-        $selectedToppings = $this->normalizeToppings($request, $data['size']);
-        $newKey = $product->id . '-' . $data['size'] . '-' . $data['split_type'];
+        $size = $isDrinkProduct ? 'single' : $data['size'];
+        $splitType = $isDrinkProduct ? 'whole' : $data['split_type'];
+        $selectedToppings = $isDrinkProduct ? [] : $this->normalizeToppings($request, $size);
+        $cutOptions = $this->normalizeCutOptions($request);
+        $newKey = $product->id . '-' . $size . '-' . $splitType;
 
-        $cart[$id]['size'] = $data['size'];
-        $cart[$id]['split_type'] = $data['split_type'];
+        $cart[$id]['size'] = $size;
+        $cart[$id]['split_type'] = $splitType;
         $cart[$id]['quantity'] = (int) $data['quantity'];
         $cart[$id]['special_instructions'] = $data['special_instructions'] ?? '';
         $cart[$id]['toppings'] = $selectedToppings;
+        $cart[$id]['cut_options'] = $cutOptions;
 
-        $basePrice = $product->priceForSize($data['size']);
-        $toppingCost = collect($selectedToppings)->sum(fn ($topping) => Topping::find($topping['id'])->priceForSize($data['size'], $topping['portion']));
+        $basePrice = $product->priceForSize($size);
+        $toppingCost = collect($selectedToppings)->sum(fn ($topping) => Topping::find($topping['id'])->priceForSize($size, $topping['portion']));
         $cart[$id]['unit_price'] = (float) $basePrice + (float) $toppingCost;
 
         if ($newKey !== $id) {
@@ -134,38 +169,84 @@ class CartController extends Controller
         return redirect()->route('cart')->with('success', 'Your item was updated.');
     }
 
+    protected function allowedSizesForProduct(?Product $product): array
+    {
+        if (! $product) {
+            return ['small', 'medium', 'large'];
+        }
+
+        $categorySlug = strtolower((string) ($product->category?->slug ?? ''));
+        if ($categorySlug === 'drinks') {
+            return ['single'];
+        }
+
+        $slug = strtolower(($product->category?->slug ?? '') . ' ' . ($product->slug ?? ''));
+
+        if (str_contains($slug, 'byo') || str_contains($slug, 'build-your-own')) {
+            return ['small', 'medium', 'large'];
+        }
+
+        return ['medium', 'large'];
+    }
+
     protected function normalizeToppings(Request $request, string $size): array
     {
-        $selected = $request->input('toppings', []);
-        $portions = $request->input('topping_portions', []);
+        $portionsByTopping = $request->input('topping_portions', []);
 
-        if (empty($selected)) {
+        if ($size === 'single') {
+            return [];
+        }
+
+        if (empty($portionsByTopping)) {
             return [];
         }
 
         $normalized = [];
 
-        foreach ($selected as $toppingId) {
-            $portion = $portions[$toppingId] ?? 'whole';
+        foreach ($portionsByTopping as $toppingId => $selectedPortions) {
+            $selectedPortions = (array) $selectedPortions;
 
-            if ($size === 'small' && $portion === 'half') {
-                continue;
+            foreach ($selectedPortions as $portion) {
+                $portion = strtolower((string) $portion);
+
+                if ($portion === '') {
+                    continue;
+                }
+
+                if ($size === 'small' && in_array($portion, ['half', 'first-half', 'second-half'], true)) {
+                    continue;
+                }
+
+                $topping = Topping::find($toppingId);
+
+                if (! $topping) {
+                    continue;
+                }
+
+                $normalized[] = [
+                    'id' => $topping->id,
+                    'name' => $topping->name,
+                    'portion' => $portion,
+                ];
             }
-
-            $topping = Topping::find($toppingId);
-
-            if (! $topping) {
-                continue;
-            }
-
-            $normalized[] = [
-                'id' => $topping->id,
-                'name' => $topping->name,
-                'portion' => $portion,
-            ];
         }
 
         return $normalized;
+    }
+
+    protected function normalizeCutOptions(Request $request): array
+    {
+        $selected = $request->input('cut_options', []);
+
+        if (empty($selected)) {
+            return [];
+        }
+
+        $allowed = ['Well Done', 'XWell Done', 'No Cut'];
+
+        return array_values(array_unique(array_filter($selected, function ($option) use ($allowed) {
+            return in_array($option, $allowed, true);
+        })));
     }
 
     public function remove(string $id)

@@ -14,23 +14,36 @@
             <div class="text-6xl">🛒</div>
             <h2 class="mt-5 text-2xl font-black text-stone-900">Your cart is empty</h2>
             <p class="mt-2 text-stone-600">Pick a pizza and build your perfect order.</p>
-            <a href="{{ route('menu') }}" class="pizza-button mt-6 inline-flex rounded-full px-6 py-3 font-bold">Browse menu</a>
+            <a href="{{ route('menu') }}" class="pizza-button mt-6 inline-flex rounded-full px-6 py-3 font-bold">Browse drinks</a>
         </div>
     @else
         <div class="grid gap-8 lg:grid-cols-[1.4fr_0.6fr]">
             <div class="space-y-5">
                 @foreach ($items as $item)
+                    @php
+                        $isDrinkItem = strtolower((string) ($item['product']?->category?->slug ?? '')) === 'drinks';
+                        $isByo = ! $isDrinkItem && (str_contains(strtolower($item['product']?->category?->slug ?? ''), 'byo') || str_contains(strtolower($item['name'] ?? ''), 'build your own'));
+                        $sizeOptions = $isDrinkItem
+                            ? ['single' => 'Single']
+                            : ($isByo
+                                ? ['small' => '10"', 'medium' => '14"', 'large' => '18"']
+                                : ['medium' => '14"', 'large' => '18"']);
+                    @endphp
                     <div class="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm">
                         <div class="flex flex-col gap-5 sm:flex-row">
                             <div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-[radial-gradient(circle,_#fef3c7,_#fbbf24_35%,_#c2410c_100%)] text-3xl">
-                                🍕
+                                {{ $isDrinkItem ? '🥤' : '🍕' }}
                             </div>
 
                             <div class="flex-1">
                                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                     <div>
                                         <h2 class="text-xl font-black text-stone-900">{{ $item['name'] }}</h2>
-                                        <p class="mt-1 text-sm uppercase tracking-[0.2em] text-orange-600">{{ ucfirst($item['size']) }} · {{ str_replace('-', ' ', $item['split_type']) }}</p>
+                                        @if ($isDrinkItem)
+                                            <p class="mt-1 text-sm uppercase tracking-[0.2em] text-orange-600">Single item</p>
+                                        @else
+                                            <p class="mt-1 text-sm uppercase tracking-[0.2em] text-orange-600">{{ ucfirst($item['size']) }} · {{ str_replace('-', ' ', $item['split_type']) }}</p>
+                                        @endif
                                         @if (!empty($item['toppings']))
                                             <p class="mt-2 text-sm text-stone-600">
                                                 Toppings: {{ collect($item['toppings'])->map(fn ($topping) => $topping['name'] . ' (' . $topping['portion'] . ')')->implode(', ') }}
@@ -43,24 +56,29 @@
                                     <div class="text-xl font-black text-stone-900">${{ number_format($item['line_total'], 2) }}</div>
                                 </div>
 
-                                <form action="{{ route('cart.update', $item['id']) }}" method="POST" class="mt-5 grid gap-4 md:grid-cols-[1fr_1fr_1fr_auto]">
+                                <form action="{{ route('cart.update', $item['id']) }}" method="POST" class="mt-5 grid gap-4 {{ $isDrinkItem ? 'md:grid-cols-[1fr_auto]' : 'md:grid-cols-[1fr_1fr_1fr_auto]' }}">
                                     @csrf
-                                    <div>
-                                        <label class="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-stone-500">Size</label>
-                                        <select name="size" class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700">
-                                            @foreach (['small' => 'Small', 'medium' => 'Medium', 'large' => 'Large'] as $size => $label)
-                                                <option value="{{ $size }}" {{ $item['size'] === $size ? 'selected' : '' }}>{{ $label }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-stone-500">Split</label>
-                                        <select name="split_type" class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700">
-                                            @foreach (['whole' => 'Whole pie', 'half-and-half' => 'Half and half', 'first-half' => 'First half', 'second-half' => 'Second half'] as $split => $label)
-                                                <option value="{{ $split }}" {{ $item['split_type'] === $split ? 'selected' : '' }}>{{ $label }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+                                    @if (! $isDrinkItem)
+                                        <div>
+                                            <label class="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-stone-500">Size</label>
+                                            <select name="size" class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700">
+                                                @foreach ($sizeOptions as $size => $label)
+                                                    <option value="{{ $size }}" {{ $item['size'] === $size ? 'selected' : '' }}>{{ $label }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-stone-500">Split</label>
+                                            <select name="split_type" class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700">
+                                                @foreach (['whole' => 'Whole pie', 'half-and-half' => 'Half and half', 'first-half' => 'First half', 'second-half' => 'Second half'] as $split => $label)
+                                                    <option value="{{ $split }}" {{ $item['split_type'] === $split ? 'selected' : '' }}>{{ $label }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    @else
+                                        <input type="hidden" name="size" value="single">
+                                        <input type="hidden" name="split_type" value="whole">
+                                    @endif
                                     <div>
                                         <label class="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-stone-500">Qty</label>
                                         <input type="number" name="quantity" min="1" value="{{ $item['quantity'] }}" class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700">

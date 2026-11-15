@@ -92,4 +92,38 @@ class AdminOrderFlowTest extends TestCase
             'payment_status' => 'paid',
         ]);
     }
+
+    public function test_cart_can_store_selected_pizza_cut_options(): void
+    {
+        $category = Category::create([
+            'name' => 'Classic Pizzas',
+            'slug' => 'classic-pizzas',
+            'description' => 'Test category',
+        ]);
+
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => 'Build Your Own Pizza',
+            'slug' => 'build-your-own-pizza',
+            'description' => 'Fresh pizza',
+            'base_price' => 19.99,
+            'small_price' => 17.99,
+            'medium_price' => 19.99,
+            'large_price' => 25.99,
+            'featured' => true,
+            'active' => true,
+        ]);
+
+        $response = $this->post(route('cart.add'), [
+            'product_id' => $product->id,
+            'size' => 'medium',
+            'split_type' => 'whole',
+            'quantity' => 1,
+            'special_instructions' => '',
+            'cut_options' => ['Well Done', 'No Cut'],
+        ]);
+
+        $response->assertRedirect(route('cart'));
+        $this->assertSame(['Well Done', 'No Cut'], session('cart')[''.$product->id.'-medium-whole']['cut_options']);
+    }
 }

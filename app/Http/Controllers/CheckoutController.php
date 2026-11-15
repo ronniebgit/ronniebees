@@ -94,7 +94,7 @@ class CheckoutController extends Controller
             'notes' => $data['notes'] ?? null,
         ]);
 
-        foreach ($cart as $item) {
+        foreach (array_values($cart) as $position => $item) {
             OrderItem::create([
                 'order_id' => $order->id,
                 'product_id' => $item['product_id'],
@@ -106,6 +106,8 @@ class CheckoutController extends Controller
                 'total_price' => $item['quantity'] * $item['unit_price'],
                 'special_instructions' => $item['special_instructions'] ?? null,
                 'toppings' => $item['toppings'] ?? [],
+                'cut_options' => $item['cut_options'] ?? [],
+                'sort_order' => $position + 1,
             ]);
         }
 

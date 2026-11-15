@@ -20,6 +20,13 @@ class Product extends Model
         'image',
         'featured',
         'active',
+        'sort_order',
+    ];
+
+    protected $casts = [
+        'featured' => 'boolean',
+        'active' => 'boolean',
+        'sort_order' => 'integer',
     ];
 
     public function category(): BelongsTo
@@ -37,8 +44,29 @@ class Product extends Model
         return 'slug';
     }
 
+    public function scopeVisible($query)
+    {
+        return $query->where('active', true);
+    }
+
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('sort_order')->orderBy('name');
+    }
+
+    public function scopeFeatured($query)
+    {
+        return $query->where('featured', true);
+    }
+
     public function priceForSize(?string $size = 'medium'): float
     {
+        $categorySlug = strtolower((string) ($this->category?->slug ?? ''));
+
+        if ($categorySlug === 'drinks') {
+            return (float) ($this->base_price ?? 0);
+        }
+
         $size = strtolower((string) $size);
 
         return match ($size) {

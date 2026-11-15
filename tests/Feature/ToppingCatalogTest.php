@@ -30,4 +30,21 @@ class ToppingCatalogTest extends TestCase
         $this->assertSame(1.75, Topping::first()->priceForSize('medium', 'whole'));
         $this->assertSame(1.00, Topping::first()->priceForSize('medium', 'half'));
     }
+
+    public function test_split_topping_variants_use_half_pricing(): void
+    {
+        $topping = new Topping([
+            'name' => 'Pepperoni',
+            'slug' => 'pepperoni',
+            'active' => true,
+            'sort_order' => 1,
+            'small_price' => 2.00,
+            'medium_price' => 2.00,
+            'large_price' => 2.00,
+        ]);
+
+        $this->assertSame(1.00, $topping->priceForSize('medium', 'first-half'));
+        $this->assertSame(1.00, $topping->priceForSize('medium', 'second-half'));
+        $this->assertSame(1.00, $topping->priceForSize('medium', 'half'));
+    }
 }

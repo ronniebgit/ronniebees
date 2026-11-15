@@ -34,7 +34,7 @@
 
                 <nav class="hidden items-center gap-8 text-sm font-semibold md:flex">
                     <a href="{{ route('home') }}" class="text-[#f4e2c5] hover:text-white">Home</a>
-                    <a href="{{ route('menu') }}" class="text-[#f4e2c5] hover:text-white">Menu</a>
+                    <a href="{{ route('menu') }}" class="text-[#f4e2c5] hover:text-white">Drinks</a>
                     <a href="{{ route('gift-card') }}" class="text-[#f4e2c5] hover:text-white">Gift card</a>
                     <a href="{{ route('checkout') }}" class="text-[#f4e2c5] hover:text-white">Checkout</a>
                 </nav>
@@ -64,7 +64,7 @@
             </div>
         @endif
 
-        <main class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <main class="mx-auto max-w-7xl bg-[#120d0c] px-4 py-10 text-[#f7efe4] sm:px-6 lg:px-8">
             @yield('content')
         </main>
 
@@ -75,9 +75,10 @@
                     <p class="mt-2 text-[#f0d8a7]">Fresh pizza. Fast pickup. Easy ordering.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-4">
-                    <a href="{{ route('menu') }}" class="text-[#f4e2c5] hover:text-white">Menu</a>
+                    <a href="{{ route('menu') }}" class="text-[#f4e2c5] hover:text-white">Drinks</a>
                     <a href="{{ route('cart') }}" class="text-[#f4e2c5] hover:text-white">Cart</a>
                     <a href="{{ route('checkout') }}" class="text-[#f4e2c5] hover:text-white">Checkout</a>
+                    <a href="{{ route('admin.login') }}" class="text-[#ffd54f] hover:text-white">Admin</a>
                 </div>
             </div>
         </footer>

@@ -7,7 +7,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Topping extends Model
 {
-    protected $fillable = ['name', 'slug', 'active', 'sort_order'];
+    protected $fillable = ['name', 'slug', 'active', 'sort_order', 'small_price', 'medium_price', 'large_price'];
+
+    protected $casts = [
+        'active' => 'boolean',
+        'small_price' => 'decimal:2',
+        'medium_price' => 'decimal:2',
+        'large_price' => 'decimal:2',
+    ];
 
     public function products(): BelongsToMany
     {
@@ -16,7 +23,7 @@ class Topping extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('active', true)->orderBy('sort_order');
+        return $query->where('active', true)->orderBy('sort_order')->orderBy('name');
     }
 
     public function priceForSize(?string $size = 'medium', ?string $portion = 'whole'): float
@@ -24,19 +31,17 @@ class Topping extends Model
         $size = strtolower((string) $size);
         $portion = strtolower((string) $portion);
 
-        if ($portion === 'half') {
-            return match ($size) {
-                'medium' => 1.00,
-                'large' => 1.50,
-                default => 0.00,
-            };
-        }
-
-        return match ($size) {
-            'small' => 1.25,
-            'medium' => 1.75,
-            'large' => 2.50,
+        $wholePrice = match ($size) {
+            'small' => (float) ($this->small_price ?? 1.25),
+            'medium' => (float) ($this->medium_price ?? 1.75),
+            'large' => (float) ($this->large_price ?? 2.50),
             default => 0.00,
         };
+
+        if (in_array($portion, ['half', 'first-half', 'second-half', 'half-and-half'], true)) {
+            return round($wholePrice / 2, 2);
+        }
+
+        return round($wholePrice, 2);
     }
 }

@@ -16,44 +16,62 @@ class DatabaseSeeder extends Seeder
         $adminEmail = env('RONNIEBEES_ADMIN_EMAIL', 'admin@ronniebees.com');
         $adminPassword = env('RONNIEBEES_ADMIN_PASSWORD', 'ronniebee123');
 
-        User::firstOrCreate(
+        User::updateOrCreate(
             ['email' => $adminEmail],
             [
                 'name' => "Ronnie Bee's Admin",
                 'password' => Hash::make($adminPassword),
+                'is_admin' => true,
             ]
         );
 
         $categories = [
             [
-                'name' => 'BYO Pizzas',
+                'name' => 'Build Your Own',
                 'slug' => 'byo-pizzas',
-                'description' => 'Build your own pizza with the toppings you want most.',
+                'description' => 'Start with a classic cheese pie and build it with the toppings you love most.',
+                'active' => true,
+                'sort_order' => 1,
             ],
             [
                 'name' => 'Classic Pizzas',
                 'slug' => 'classic-pizzas',
                 'description' => 'Our favorite everyday favorites with bold, familiar flavor.',
+                'active' => true,
+                'sort_order' => 2,
             ],
             [
                 'name' => 'Signature Pizzas',
                 'slug' => 'signature-pizzas',
                 'description' => 'Chef-crafted pies built for big flavor and fresh ingredients.',
+                'active' => true,
+                'sort_order' => 3,
             ],
             [
                 'name' => 'Veggie Lovers',
                 'slug' => 'veggie-lovers',
                 'description' => 'Loaded with greens, herbs, and bright toppings.',
+                'active' => true,
+                'sort_order' => 4,
             ],
             [
                 'name' => 'Available Add-Ons',
                 'slug' => 'add-ons',
                 'description' => 'Perfect extras to pair with your pie.',
+                'active' => true,
+                'sort_order' => 5,
+            ],
+            [
+                'name' => 'Drinks',
+                'slug' => 'drinks',
+                'description' => 'Cold and hot beverages paired with your order.',
+                'active' => true,
+                'sort_order' => 6,
             ],
         ];
 
         foreach ($categories as $category) {
-            Category::firstOrCreate(['slug' => $category['slug']], $category);
+            Category::updateOrCreate(['slug' => $category['slug']], $category);
         }
 
         $byo = Category::where('slug', 'byo-pizzas')->first();
@@ -75,13 +93,16 @@ class DatabaseSeeder extends Seeder
                 'slug' => $slug,
                 'active' => true,
                 'sort_order' => $index + 1,
+                'small_price' => 1.25,
+                'medium_price' => 1.75,
+                'large_price' => 2.50,
             ]);
         }
 
         $products = [
             [
                 'category_id' => $byo->id,
-                'name' => 'Build Your Own Pizza',
+                'name' => 'Build Your Own',
                 'slug' => 'build-your-own-pizza',
                 'description' => 'Start with a classic cheese pie and build it with the toppings you love most.',
                 'base_price' => 9.95,
@@ -99,8 +120,8 @@ class DatabaseSeeder extends Seeder
                 'description' => 'Fresh mozzarella, basil, tomato sauce, and a drizzle of olive oil.',
                 'base_price' => 9.95,
                 'small_price' => 9.95,
-                'medium_price' => 16.45,
-                'large_price' => 21.95,
+                'medium_price' => 21.99,
+                'large_price' => 21.99,
                 'image' => null,
                 'featured' => true,
                 'active' => true,
@@ -112,8 +133,8 @@ class DatabaseSeeder extends Seeder
                 'description' => 'Classic pepperoni, mozzarella, and a rich tomato base.',
                 'base_price' => 9.95,
                 'small_price' => 9.95,
-                'medium_price' => 16.45,
-                'large_price' => 21.95,
+                'medium_price' => 24.99,
+                'large_price' => 24.99,
                 'image' => null,
                 'featured' => true,
                 'active' => true,
@@ -125,8 +146,8 @@ class DatabaseSeeder extends Seeder
                 'description' => 'Grilled chicken, red onion, BBQ sauce, and smoked gouda.',
                 'base_price' => 9.95,
                 'small_price' => 9.95,
-                'medium_price' => 16.45,
-                'large_price' => 21.95,
+                'medium_price' => 26.99,
+                'large_price' => 26.99,
                 'image' => null,
                 'featured' => true,
                 'active' => true,
@@ -138,8 +159,8 @@ class DatabaseSeeder extends Seeder
                 'description' => 'Buffalo chicken, ranch drizzle, red onion, and mozzarella.',
                 'base_price' => 9.95,
                 'small_price' => 9.95,
-                'medium_price' => 16.45,
-                'large_price' => 21.95,
+                'medium_price' => 27.99,
+                'large_price' => 27.99,
                 'image' => null,
                 'featured' => true,
                 'active' => true,
