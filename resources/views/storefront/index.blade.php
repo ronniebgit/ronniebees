@@ -44,7 +44,10 @@
                             <h3>What is New York Style Pizza?</h3>
                             <p>New York style pizza is a very thin style of pizza characterized by its large, foldable slices and crispy outer crust. It is traditionally topped with tomato sauce and mozzarella cheese.</p>
                             <div class="rb-banner-actions">
-                                <a href="{{ route('menu') }}" class="rb-btn rb-btn-primary">See Drinks</a>
+                                @php
+                                    $byoProduct = $featuredProducts->firstWhere('slug', 'build-your-own-pizza') ?? $featuredProducts->first();
+                                @endphp
+                                <a href="{{ $byoProduct ? route('product.show', $byoProduct) : route('menu') }}" class="rb-btn rb-btn-primary">Build Your Own</a>
                             </div>
                         </div>
 
@@ -73,7 +76,10 @@
                             <h3>Neighborhood favorite</h3>
                             <p>Classic slices, bold sauce, melted mozzarella, and a crisp finish that keeps customers coming back for more.</p>
                             <div class="rb-banner-actions">
-                                <a href="{{ route('menu') }}" class="rb-btn rb-btn-primary">See Drinks</a>
+                                @php
+                                    $favoritePizza = $featuredProducts->firstWhere('slug', 'pepperoni-feast') ?? $featuredProducts->first();
+                                @endphp
+                                <a href="{{ $favoritePizza ? route('product.show', $favoritePizza) : route('menu') }}" class="rb-btn rb-btn-primary">Order Favorite</a>
                             </div>
                         </div>
 
@@ -102,7 +108,10 @@
                             <h3>Made your way</h3>
                             <p>Choose your size, sauce, split options, and toppings to create a pizza that feels like your own neighborhood favorite.</p>
                             <div class="rb-banner-actions">
-                                <a href="{{ route('menu') }}" class="rb-btn rb-btn-primary">Drinks</a>
+                                @php
+                                    $featuredByo = $featuredProducts->firstWhere('slug', 'build-your-own-pizza') ?? $featuredProducts->first();
+                                @endphp
+                                <a href="{{ $featuredByo ? route('product.show', $featuredByo) : route('menu') }}" class="rb-btn rb-btn-primary">Customize Pizza</a>
                             </div>
                         </div>
 
@@ -187,7 +196,10 @@
                         <span>Shop by favorite</span>
                         <h2>Build your perfect pie</h2>
                     </div>
-                    <a href="{{ route('menu') }}">View all drinks</a>
+                    @php
+                        $featuredByo = $featuredProducts->firstWhere('slug', 'build-your-own-pizza') ?? $featuredProducts->first();
+                    @endphp
+                    <a href="{{ $featuredByo ? route('product.show', $featuredByo) : route('menu') }}">Build Your Own</a>
                 </div>
 
                 <div class="rb-menu-grid">
